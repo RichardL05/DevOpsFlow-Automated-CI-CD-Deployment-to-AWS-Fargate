@@ -129,7 +129,32 @@ if (deployed["taskDefinition"] != new_arn
     raise RuntimeError("Service did not settle on the requested revision; check ECS events")
 print("ECS deployment stable:", new_arn)
 print("Deployed image:", image)
-print("API health and smoke verification remain a separate check.")
+task_arns = aws("ecs", "list-tasks", "--cluster", cluster,
+                "--service-name", service_name, "--desired-status", "RUNNING")["taskArns"]
+if not task_arns:
+    raise RuntimeError("No running service task found")
+response = aws("ecs", "describe-tasks", "--cluster", cluster, "--tasks", *task_arns)
+if response.get("failures"):
+    raise RuntimeError("Task lookup failed: " + json.dumps(response["failures"]))
+matching = [t for t in response["tasks"]
+            if t["taskDefinitionArn"] == new_arn and t["lastStatus"] == "RUNNING"]
+if len(matching) != 1:
+    raise RuntimeError("Expected exactly one running task on the new revision")
+container = next(c for c in matching[0]["containers"] if c["name"] == "devopsflow")
+if container.get("imageDigest") != digest:
+    raise RuntimeError("Running container digest does not match published image")
+addresses = [n["privateIpv4Address"] for n in container.get("networkInterfaces", [])
+             if n.get("privateIpv4Address")]
+if len(addresses) != 1:
+    raise RuntimeError("Could not identify the task private IP")
+endpoint = "http://" + addresses[0] + ":8080"
+print("Checking deployed API:", endpoint, flush=True)
+subprocess.run(["curl", "--fail", "--silent", "--show-error",
+                "--retry", "20", "--retry-all-errors", "--retry-delay", "2",
+                "--retry-max-time", "90", "--max-time", "5",
+                endpoint + "/actuator/health"], check=True)
+subprocess.run(["python3", "scripts/smoke_test.py", endpoint], check=True)
+print("Deployed API verification passed.", flush=True)
 PY
 '''
             }
