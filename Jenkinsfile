@@ -33,6 +33,32 @@ pipeline {
                 sh 'docker image inspect "devopsflow:build-${BUILD_NUMBER}" --format "{{.Id}}"'
             }
         }
+        stage('Push to Amazon ECR') {
+            steps {
+                sh '''#!/bin/bash
+set -euo pipefail
+set +x
+export AWS_DEFAULT_REGION=ap-south-2
+REGISTRY=358122644682.dkr.ecr.ap-south-2.amazonaws.com
+IMAGE="$REGISTRY/devopsflow:build-${BUILD_NUMBER}"
+
+# Keep the short-lived registry credential outside the workspace.
+export DOCKER_CONFIG
+DOCKER_CONFIG=$(mktemp -d)
+trap 'rm -rf -- "$DOCKER_CONFIG"' EXIT
+
+aws ecr get-login-password |
+    docker login --username AWS --password-stdin "$REGISTRY"
+docker tag "devopsflow:build-${BUILD_NUMBER}" "$IMAGE"
+docker push "$IMAGE"
+aws ecr describe-images \
+    --repository-name devopsflow \
+    --image-ids imageTag="build-${BUILD_NUMBER}" \
+    --query 'imageDetails[0].{Tags:imageTags,Digest:imageDigest}' \
+    --output json
+'''
+            }
+        }
     }
 
     post {
