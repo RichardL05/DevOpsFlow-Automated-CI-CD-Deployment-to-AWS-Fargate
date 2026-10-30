@@ -176,3 +176,17 @@ Verification boundary:
 - No Jenkins run occurred during the controlled test.
 - Revision 6 remains a deliberately invalid historical task definition; deregistration/cleanup has not been evidenced.
 - Jira evidence was supplied for the user to record. The assistant has not verified the saved Jira comment or changed the epic status.
+
+## Beginner scope update — 2026-10-30
+
+The user requested a beginner project without Jira requirements, retaining ECS Fargate and automatic deployment. AWS Console is preferred for user setup, inspection, logs, and troubleshooting; commands inside Jenkins continue to provide automation.
+
+Assistant changes in this documentation update:
+- Rewrote README around the verified GitHub → Jenkins → Maven → Docker → ECR → Fargate → API checks workflow.
+- Removed stale beginner-facing instructions saying the API/pipeline still awaited its first build.
+- Added a console-first walkthrough, stage explanations, troubleshooting, and a small practice exercise.
+- Made Jira optional history; no Jira issues, app installation, or historical records were deleted.
+- Explicitly documented that only Jenkins-published images are automatically deployed after GitHub-triggered builds. Arbitrary direct ECR uploads do not trigger deployment.
+- Retained the existing Jenkinsfile and application behavior; no AWS resources were changed.
+
+This is a documentation change. Existing build/test and rollback evidence remains historical evidence. No new Jenkins build has been observed for this change, and no new runtime validation is claimed.
