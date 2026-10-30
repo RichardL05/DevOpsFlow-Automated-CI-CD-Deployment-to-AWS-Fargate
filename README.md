@@ -34,7 +34,7 @@ Every push to main, including documentation changes, currently runs the full pip
 
 ## What is already verified
 
-- Rebuilt environment: Jenkins build #2 loaded the Jenkinsfile from GitHub, deployed `devopsflow-task:11` to Fargate, and passed automatic health and API smoke checks. The rebuilt server's webhook reports successful delivery; a new push-triggered build still needs verification.
+- Rebuilt environment: Jenkins build #2 loaded the Jenkinsfile from GitHub, deployed `devopsflow-task:11` to Fargate, and passed automatic health and API smoke checks. Rebuilt Jenkins build #3 was triggered by a GitHub push, deployed task revision 12, passed API checks, and finished SUCCESS.
 - 22 Java automated tests passed; runtime CRUD, validation, and health checks passed.
 - GitHub-triggered Jenkins builds #11 and #12 finished SUCCESS.
 - Jenkins built images, published to ECR, deployed to Fargate, and checked the running API automatically.
@@ -88,7 +88,7 @@ The application binds to localhost by default. Container deployments set `SERVER
 - Invalid JSON, invalid statuses (including numeric values), invalid IDs, and validation errors return 400.
 - Retrieve, update, and delete of a missing task return 404 with `Task not found` details.
 - Errors use Spring's RFC 9457 Problem Details (`application/problem+json`). Validation failures include an `errors` field map.
-- Health is the only exposed Actuator endpoint. Login, database persistence, pagination, and a web interface are deferred.
+- Health and Prometheus metrics are the exposed Actuator endpoints. Login, database persistence, pagination, and a web interface are deferred.
 
 Examples (run inside EC2 while the application is running):
 
@@ -109,3 +109,7 @@ Use the ID from the creation response for GET, PUT, and DELETE; do not assume a 
 - ECS startup-failure rollback was tested. A failing Jenkins API check marks the build failed but does not automatically roll back the service.
 - No load balancer or stable application URL: task public IPs may change after deployment.
 - Jenkins uses public HTTP on port 8080, open to all IPv4 addresses by the user's choice; authentication remains required. The API has no authentication. This is a learning setup.
+
+## Monitoring extension
+
+[Prometheus and Grafana setup](monitoring/README.md) adds application metrics, automatic Fargate target discovery, and a provisioned dashboard. Configuration is prepared; live installation, scraping, and dashboard verification are pending. Metrics share port 8080, so scope application access to the EC2 security group and your IP before deployment. Grafana should be allowed on port 3000 from your IP only.
