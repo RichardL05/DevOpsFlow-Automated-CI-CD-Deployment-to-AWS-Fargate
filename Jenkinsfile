@@ -3,7 +3,7 @@ pipeline {
 
     options {
         disableConcurrentBuilds()
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
@@ -56,6 +56,81 @@ aws ecr describe-images \
     --image-ids imageTag="build-${BUILD_NUMBER}" \
     --query 'imageDetails[0].{Tags:imageTags,Digest:imageDigest}' \
     --output json
+'''
+            }
+        }
+        stage('Deploy to ECS Fargate') {
+            steps {
+                sh '''#!/bin/bash
+set -euo pipefail
+export AWS_DEFAULT_REGION=ap-south-2
+python3 - <<'PY'
+import json
+import os
+import subprocess
+from pathlib import Path
+
+def aws(*args):
+    result = subprocess.run(
+        ["aws", *args, "--output", "json", "--no-cli-pager"],
+        check=True, text=True, capture_output=True)
+    return json.loads(result.stdout) if result.stdout.strip() else {}
+
+cluster = "devopsflow-cluster"
+service_name = "devopsflow-service"
+
+def service():
+    response = aws("ecs", "describe-services", "--cluster", cluster,
+                   "--services", service_name)
+    if response.get("failures") or len(response.get("services", [])) != 1:
+        raise RuntimeError("ECS service lookup failed: " + json.dumps(response))
+    return response["services"][0]
+
+current = service()
+if current["desiredCount"] != 1:
+    raise RuntimeError("Expected exactly one desired task for in-memory storage")
+task = aws("ecs", "describe-task-definition",
+           "--task-definition", current["taskDefinition"])["taskDefinition"]
+if task["family"] != "devopsflow-task":
+    raise RuntimeError("Unexpected task definition family")
+
+digest = aws("ecr", "describe-images", "--repository-name", "devopsflow",
+             "--image-ids", "imageTag=build-" + os.environ["BUILD_NUMBER"]
+             )["imageDetails"][0]["imageDigest"]
+image = "358122644682.dkr.ecr.ap-south-2.amazonaws.com/devopsflow@" + digest
+containers = [c for c in task["containerDefinitions"] if c["name"] == "devopsflow"]
+if len(containers) != 1:
+    raise RuntimeError("Expected one devopsflow container")
+containers[0]["image"] = image
+
+# Remove response-only fields before registering the next revision.
+for field in ("taskDefinitionArn", "revision", "status", "requiresAttributes",
+              "compatibilities", "registeredAt", "registeredBy", "deregisteredAt"):
+    task.pop(field, None)
+definition = Path("target/ecs-task-definition.json")
+definition.write_text(json.dumps(task), encoding="utf-8")
+new_arn = aws("ecs", "register-task-definition",
+              "--cli-input-json", "file://" + str(definition)
+              )["taskDefinition"]["taskDefinitionArn"]
+print("Registered:", new_arn, flush=True)
+aws("ecs", "update-service", "--cluster", cluster, "--service", service_name,
+    "--task-definition", new_arn)
+try:
+    aws("ecs", "wait", "services-stable", "--cluster", cluster,
+        "--services", service_name)
+except subprocess.CalledProcessError:
+    print(json.dumps(service().get("events", [])[:10], indent=2), flush=True)
+    raise
+
+deployed = service()
+if (deployed["taskDefinition"] != new_arn
+        or deployed["runningCount"] != deployed["desiredCount"]
+        or deployed["pendingCount"] != 0):
+    raise RuntimeError("Service did not settle on the requested revision; check ECS events")
+print("ECS deployment stable:", new_arn)
+print("Deployed image:", image)
+print("API health and smoke verification remain a separate check.")
+PY
 '''
             }
         }
