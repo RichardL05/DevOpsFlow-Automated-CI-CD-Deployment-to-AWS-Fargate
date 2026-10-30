@@ -168,6 +168,16 @@ class TaskApiIntegrationTest {
     }
 
     @Test
+    void prometheusExportsJvmAndHttpMetrics() throws Exception {
+        assertEquals(200, request("GET", "/api/tasks", null).statusCode());
+        var metrics = request("GET", "/actuator/prometheus", null);
+        assertEquals(200, metrics.statusCode(), metrics.body());
+        assertTrue(metrics.body().contains("jvm_memory_used_bytes"));
+        assertTrue(metrics.body().contains("http_server_requests_seconds_count"));
+        assertEquals(404, request("GET", "/actuator/env", null).statusCode());
+    }
+
+    @Test
     void nonNumericIdReturnsBadRequest() throws Exception {
         assertEquals(400, request("GET", "/api/tasks/not-a-number", null).statusCode());
     }
