@@ -18,7 +18,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     credentialsId: 'github-devopsflow',
-                    url: 'https://github.com/RichardL05/devopsflow.git'
+                    url: 'https://github.com/RichardL05/DevOpsFlow-Automated-CI-CD-Deployment-to-AWS-Fargate.git'
             }
         }
 

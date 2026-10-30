@@ -51,7 +51,7 @@ These are observed results, not a guarantee that future builds pass. See the [im
 ## Current learning environment
 
 - Region: Hyderabad (`ap-south-2`)
-- Repository: `RichardL05/devopsflow`; branch: `main`
+- Repository: `RichardL05/DevOpsFlow-Automated-CI-CD-Deployment-to-AWS-Fargate`; branch: `main`
 - Jenkins credential ID: `github-devopsflow`
 - ECR repository: `devopsflow`; image tags: `build-<Jenkins build number>`
 - ECS cluster: `devopsflow-cluster`

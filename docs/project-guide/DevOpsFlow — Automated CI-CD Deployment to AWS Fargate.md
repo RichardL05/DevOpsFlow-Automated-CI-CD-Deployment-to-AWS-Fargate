@@ -23,7 +23,7 @@ GitHub push → Jenkins → Maven → Docker → ECR → ECS Fargate → Health 
 
 ## 2. Environment used
 
-Region: Hyderabad, ap-south-2. Existing repository: RichardL05/devopsflow.
+Region: Hyderabad, ap-south-2. Existing repository: RichardL05/DevOpsFlow-Automated-CI-CD-Deployment-to-AWS-Fargate.
 
 | Resource | Name or setting |
 | --- | --- |
@@ -221,7 +221,7 @@ File: Jenkinsfile. Store it in the GitHub repository root. Once the ECS service 
 Job → Configure → Pipeline:
 - Definition: Pipeline script from SCM.
 - SCM: Git.
-- URL: https://github.com/RichardL05/devopsflow.git.
+- URL: https://github.com/RichardL05/DevOpsFlow-Automated-CI-CD-Deployment-to-AWS-Fargate.git.
 - Credential: github-devopsflow.
 - Branch: */main.
 - Script path: Jenkinsfile.
