@@ -1,58 +1,73 @@
-> **Verified status — 2026-10-30:** The application is deployed on **ECS Fargate**, with **Jenkins on EC2**. GitHub-triggered Jenkins build #11 completed successfully after automated Maven build/tests, Docker packaging, ECR publishing, Fargate deployment, and API verification. The API's 22 automated tests and restart data-loss behavior were verified earlier. See [implementation record](docs/implementation-record.md) for evidence and limitations. Earlier pending/setup text below describes the initial implementation snapshot.
->
-> The application uses temporary in-memory storage. Jenkins currently uses publicly reachable HTTP at the user's choice. Automated rollback following API-check failure, Jira build/deployment reporting, stable application endpoint, and advanced monitoring remain follow-up work.
+# DevOps Flow — Beginner CI/CD on AWS Fargate
 
-# DevOps Flow
+A learning project that automatically delivers a simple Java to-do API to AWS. Use the AWS Console to set up and inspect resources; Jenkins runs the deployment commands for you.
 
-A hands-on learning and portfolio project: a Java Task Management REST API with a planned Jira-integrated delivery pipeline on AWS.
+## How it works
 
-## Current status
+**Push to GitHub main → Jenkins → Maven build and tests → Docker image → Amazon ECR → ECS Fargate → automatic API checks**
 
-- Jira space **DevOps Flow**, key **DEVOPS**, board, backlog, and implementation epics exist.
-- Requirements planning in DEVOPS-5 and repository setup in DEVOPS-13 are complete.
-- Documentation PR #1 was merged into `main`.
-- GitHub for Atlassian is connected with only `RichardL05/devopsflow` selected for repository permissions. Jira's DEVOPS-13 Development panel was observed showing 2 branches, 3 commits, and 1 merged pull request.
-- The user created an Ubuntu 26.04.1 LTS x86-64 EC2 development machine. Screenshots verified OpenJDK and javac 17.0.20.1, Maven 3.9.12 using Java 17, and Git 2.53.0.
-- The user's initial EC2 starter build returned `BUILD SUCCESS` and its health endpoint returned `UP`.
-- **This branch adds the complete CRUD implementation and tests. Its Java build and tests still require execution on EC2.** The earlier starter result is not evidence that this implementation passes.
-- Jenkins, Docker packaging, ECR, automated deployment, and Jira build/deployment reporting are pending. A development EC2 host is not an automated deployment pipeline.
+Jenkins runs on EC2. The application runs on Fargate. Jira is optional historical project tracking and is not required to follow or run this project.
 
-## Requirements
+| Tool | Its job |
+| --- | --- |
+| GitHub | Stores code and notifies Jenkins about pushes |
+| Maven | Builds the Java application and runs tests |
+| Jenkins | Runs the steps in Jenkinsfile automatically |
+| Docker | Packages the application |
+| ECR | Stores versioned images |
+| ECS Fargate | Runs the application without managing application servers |
+| AWS Console | Lets you view images, deployments, tasks, networking, and logs |
 
-- Java **17 JDK**, Maven **3.6.3+**, and Git.
-- Spring Boot **4.1.2**, pinned in `pom.xml`.
-- Python 3 only if running the optional smoke-test script.
+## Start here
 
-## Build and run on EC2
+Follow the [beginner console guide](docs/beginner-guide.md). Learn the existing stages before adding features.
 
-To preserve the existing starter checkout, clone this feature branch into a separate directory:
+For a normal change:
+1. Edit the code in a feature branch and open a pull request to main.
+2. Review and merge the pull request.
+3. Watch the automatically triggered Jenkins build.
+4. Inspect the new image in ECR and the deployment in ECS Console.
+5. Confirm Jenkins reports successful API checks.
+
+Jenkins deploys the image it builds and publishes, using its exact digest. **Uploading an image directly to ECR does not trigger deployment in this setup.** No EventBridge image-upload trigger has been configured.
+
+Every push to main, including documentation changes, currently runs the full pipeline and replaces the application task. Temporary task data is lost when the application process is replaced.
+
+## What is already verified
+
+- 22 Java automated tests passed; runtime CRUD, validation, and health checks passed.
+- GitHub-triggered Jenkins builds #11 and #12 finished SUCCESS.
+- Jenkins built images, published to ECR, deployed to Fargate, and checked the running API automatically.
+- A deliberately missing image caused ECS startup failures; ECS automatically rolled back from task revision 6 to revision 5.
+- The recovered application passed API smoke checks.
+
+These are observed results, not a guarantee that future builds pass. See the [implementation record](docs/implementation-record.md) for evidence and historical details.
+
+## Current learning environment
+
+- Region: Hyderabad (`ap-south-2`)
+- Repository: `RichardL05/devopsflow`; branch: `main`
+- Jenkins credential ID: `github-devopsflow`
+- ECR repository: `devopsflow`; image tags: `build-<Jenkins build number>`
+- ECS cluster: `devopsflow-cluster`
+- ECS service: `devopsflow-service`
+- Task definition family: `devopsflow-task`; container: `devopsflow`
+- Container port: 8080; one desired task
+- Java 17 / Spring Boot 4.1.2 application; Jenkins runtime uses Java 21
+- Application storage is in memory. No database, login, or frontend.
+
+The Jenkinsfile contains settings for this existing AWS account and environment. Reusing the project in another account requires changing those settings and configuring its resources and permissions first.
+
+## Build locally or on the development host (optional)
+
+Requires Java 17 JDK, Maven, and Git. Run from a checkout of main:
 
 ```bash
-mkdir -p ~/projects
-cd ~/projects
-git clone --branch feature/DEVOPS-8-task-api https://github.com/RichardL05/devopsflow.git devopsflow-api
-cd devopsflow-api
-mvn -B clean verify
-```
-
-If `devopsflow-api` already exists, inspect it first instead of overwriting it. Run the build only after cloning succeeds. For private-repository HTTPS access, enter the GitHub username and fine-grained token at Git's prompts. Do not embed the token in commands or the URL. No Maven Wrapper is required; use the installed `mvn`.
-
-After `BUILD SUCCESS`, start the executable jar in the foreground:
-
-```bash
+mvn -B -ntp clean verify
 java -jar target/devopsflow-0.0.1-SNAPSHOT.jar --server.port=8081
 ```
 
-Port **8081** avoids the earlier starter still running on 8080. In another EC2 terminal:
-
-```bash
-curl -fsS http://127.0.0.1:8081/actuator/health
-python3 scripts/smoke_test.py http://127.0.0.1:8081
-```
-
-The health response must contain `"status":"UP"`. The smoke script prints `PASS` only after its HTTP checks succeed, creates a temporary task, and deletes that task. These are expected outcomes, not recorded test results.
-
-The application binds to **127.0.0.1 by default** and requires no public inbound application port for these checks. Stop a foreground application using Ctrl+C. For a future container deployment, set `SERVER_ADDRESS=0.0.0.0` inside the container and separately review the host's network exposure. This learning API has no authentication.
+The application binds to localhost by default. Container deployments set `SERVER_ADDRESS=0.0.0.0`. The existing pipeline runs the build and checks automatically, so these manual commands are optional learning exercises.
 
 ## API contract
 
@@ -87,50 +102,12 @@ curl -i http://127.0.0.1:8081/api/tasks
 
 Use the ID from the creation response for GET, PUT, and DELETE; do not assume a fixed ID.
 
-## Application structure and storage
 
-```text
-HTTP request -> TaskController -> TaskService -> InMemoryTaskRepository
-                                     |
-                          immutable Task records
+## Scope and limitations
 
-Validation/error handling: CreateTaskRequest, UpdateTaskRequest, ApiExceptionHandler
-Health: Spring Boot Actuator
-```
-
-The controller translates HTTP requests, the service applies task behaviour, and the repository keeps tasks in a concurrent map. Atomic ID generation avoids duplicate IDs during concurrent creation. Updating an existing task uses an atomic map operation so it cannot recreate an already deleted task.
-
-Storage is deliberately temporary: **restarting the application loses every task and resets the ID sequence**. Each application process has its own independent list. Do not use this implementation as persistent production storage.
-
-## Tests
-
-Run `mvn -B clean verify`. Maven's normal test phase includes:
-
-- `TaskServiceTest`: defaults, generated IDs, updates, deletion, missing-task handling, fresh-repository behaviour, and concurrent creation.
-- `TaskApiIntegrationTest`: starts the actual application on a random localhost port and checks the complete HTTP CRUD lifecycle, Location header, ordering, allowed statuses, bad input, invalid-update atomicity, optional descriptions, missing tasks, and restricted health exposure.
-
-The random test port avoids conflicting with the manually started application. Tests remain **unexecuted for this new branch until an actual result is recorded**. A unit test with a fresh repository is distinct from a verified full application restart.
-
-## Git and Jira workflow
-
-- `main`: reviewed baseline. The application change is awaiting build evidence and pull request review.
-- `feature/DEVOPS-<number>-description`: application/pipeline changes.
-- `bugfix/DEVOPS-<number>-description`: fixes.
-- `docs/DEVOPS-<number>-description`: documentation.
-
-Include the Jira key in branches, commits, and pull request titles. This application branch references **DEVOPS-8**, the existing application epic. GitHub-to-Jira development linking has been verified; enforced branch protection and automated checks have not been configured. Do not mark the epic Done solely because code has been generated or pushed.
-
-## Planned delivery milestones
-
-| Epic | Completion goal |
-| --- | --- |
-| DEVOPS-7 | GitHub repository and Jira traceability |
-| DEVOPS-8 | Verified Task Management API |
-| DEVOPS-9 | GitHub webhook -> Jenkins checkout -> Maven build and tests |
-| DEVOPS-10 | Docker image build, container test, and verified ECR push |
-| DEVOPS-11 | Verified container deployment on approved EC2 infrastructure |
-| DEVOPS-12 | Verified Jira build and deployment reporting |
-
-Later delivery stages stop on build/test failure and include a deployed health check. Jenkins is the planned automation engine; AWS CodeBuild is not a dependency. Prometheus/Grafana, Terraform, additional environments, and advanced security/rollback work are deferred.
-
-See [the implementation record](docs/implementation-record.md) for observed work and pending verification. This is a learning project, not professional employment experience.
+- Use AWS Console for resource setup, status, logs, and troubleshooting. AWS CLI and Python inside Jenkins are automation implementation details; manual CLI use is not the normal learning workflow.
+- Existing GitHub/Jira history remains, but Jira keys and Jira reporting are not requirements for new work. Simple branch names such as `feature/update-task-message` are sufficient.
+- ECS startup-failure rollback was tested. A failing Jenkins API check marks the build failed but does not automatically roll back the service.
+- No load balancer or stable application URL: task public IPs may change after deployment.
+- Jenkins uses public HTTP on port 8080, open to all IPv4 addresses by the user's choice; authentication remains required. The API has no authentication. This is a learning setup.
+- Database persistence, frontend, advanced monitoring, Terraform, extra environments, and Jira reporting are outside the current beginner scope.
