@@ -19,7 +19,7 @@ A learning project that automatically delivers a simple Java to-do API to AWS. U
 
 ## Start here
 
-Follow the [beginner console guide](docs/beginner-guide.md). Learn the existing stages before adding features.
+Read the [complete project guide](docs/project-guide.md) for setup steps, commands, permissions, and full delivery scripts in simple English. Use the [beginner console guide](docs/beginner-guide.md) as a shorter daily walkthrough.
 
 For a normal change:
 1. Edit the code in a feature branch and open a pull request to main.
