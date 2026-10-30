@@ -4,7 +4,7 @@ This is a procedure to run, not a claim that these checks have passed.
 
 ## Build
 
-Use a separate checkout as described in the README so the existing EC2 starter and any uncommitted changes are preserved. Verify `java -version`, `javac -version`, and `mvn -version` report Java 17, then run:
+Use an existing application checkout, preserving any uncommitted changes. This optional manual exercise is separate from the automatic Fargate pipeline. Verify `java -version`, `javac -version`, and `mvn -version` report Java 17, then run:
 
 ```bash
 mvn -B clean verify
@@ -40,4 +40,4 @@ Record the actual responses. This is the explicit restart check; the tests' fres
 
 ## Completion
 
-Review the PR and merge only after the new implementation's build, tests, smoke check, and restart behaviour are verified. Update Jira and this project's evidence record with the actual results. Never paste PATs or SSH private keys into logs or GitHub.
+Review the PR and merge only after the new implementation's build, tests, smoke check, and restart behaviour are verified. Update this project's evidence record with the actual results. Never paste PATs or SSH private keys into logs or GitHub.
