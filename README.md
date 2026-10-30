@@ -34,6 +34,7 @@ Every push to main, including documentation changes, currently runs the full pip
 
 ## What is already verified
 
+- Rebuilt environment: Jenkins build #2 loaded the Jenkinsfile from GitHub, deployed `devopsflow-task:11` to Fargate, and passed automatic health and API smoke checks. The rebuilt server's webhook reports successful delivery; a new push-triggered build still needs verification.
 - 22 Java automated tests passed; runtime CRUD, validation, and health checks passed.
 - GitHub-triggered Jenkins builds #11 and #12 finished SUCCESS.
 - Jenkins built images, published to ECR, deployed to Fargate, and checked the running API automatically.
