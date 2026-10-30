@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ecs:ListTasks",
+      "Resource": "*",
+      "Condition": {
+        "ArnEquals": {
+          "ecs:cluster": "arn:aws:ecs:YOUR_REGION:YOUR_ACCOUNT_ID:cluster/devopsflow-cluster"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ecs:DescribeTasks",
+      "Resource": "arn:aws:ecs:YOUR_REGION:YOUR_ACCOUNT_ID:task/devopsflow-cluster/*"
+    }
+  ]
+}

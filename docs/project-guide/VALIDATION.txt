@@ -1,0 +1,19 @@
+PASS Bash syntax and LF line endings: setup/01-install-jenkins.sh
+PASS Bash syntax and LF line endings: setup/02-unlock-jenkins.sh
+PASS Bash syntax and LF line endings: setup/03-install-docker.sh
+PASS Bash syntax and LF line endings: setup/04-allow-jenkins-docker.sh
+PASS Bash syntax and LF line endings: setup/05-install-java-maven.sh
+PASS Bash syntax and LF line endings: setup/06-verify-java-maven.sh
+PASS Bash syntax and LF line endings: setup/07-install-aws-cli.sh
+PASS Bash syntax and LF line endings: setup/08-verify-aws-role.sh
+PASS JSON parsing and policy structure: policies/ec2-trust.json
+PASS JSON parsing and policy structure: policies/ecr-push-pull.json
+PASS JSON parsing and policy structure: policies/ecs-deployment.json
+PASS JSON parsing and policy structure: policies/ecs-execution-trust.json
+PASS JSON parsing and policy structure: policies/ecs-task-discovery.json
+PASS Python syntax: scripts/smoke_test.py
+PASS embedded Bash/Python syntax: Jenkinsfile
+PASS embedded Bash/Python syntax: Jenkinsfile.bootstrap
+PASS baseline copies: Jenkinsfile, Dockerfile, scripts/smoke_test.py
+NOT RUN: Groovy/Jenkins declarative validation, Ubuntu installation, IAM authorization, live AWS deployment.
+PENDING: latest successful Jenkins build after repository cleanup.

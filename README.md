@@ -1,4 +1,4 @@
-# DevOps Flow — Beginner CI/CD on AWS Fargate
+# DevOpsFlow — Automated CI/CD Deployment to AWS Fargate
 
 A learning project that automatically delivers a simple Java to-do API to AWS. Use the AWS Console to set up and inspect resources; Jenkins runs the deployment commands for you.
 
@@ -18,6 +18,11 @@ A learning project that automatically delivers a simple Java to-do API to AWS. U
 | AWS Console | Lets you view images, deployments, tasks, networking, and logs |
 
 ## Start here
+
+- [Complete project document with screenshots](docs/project-guide/DevOpsFlow%20%E2%80%94%20Automated%20CI-CD%20Deployment%20to%20AWS%20Fargate.pdf)
+- [Setup scripts, IAM policies, and reuse instructions](docs/project-guide/START_HERE.md)
+- [Local file validation results](docs/project-guide/VALIDATION.txt)
+
 
 Follow the [beginner console guide](docs/beginner-guide.md). Learn the existing stages before adding features.
 
