@@ -124,3 +124,29 @@ Verification boundary:
 
 Jenkins, Docker, ECR, automated EC2 deployment, advanced monitoring, and branch protection remain pending. No cloud resources were created by the assistant during this code-generation step.
 
+
+## Verified application and delivery — 2026-10-30
+
+Evidence: user-supplied EC2 command output, Jenkins console output, and AWS screenshots in the project conversation. Assistant authored code and pipeline changes through GitHub pull requests; the user performed installations, AWS setup, merges, and Jenkins runs. This entry supersedes earlier pending statements for the items below.
+
+- Complete API: 22 automated tests passed with zero failures/errors/skips. Runtime CRUD, validation, missing-task responses, health, and loss of tasks after restart were verified.
+- Docker: user installed Docker, built a Java 17 runtime image running as a non-root user, and passed container health/API smoke checks.
+- ECR: private Hyderabad repository `devopsflow`; EC2 IAM role supplies temporary credentials. Versioned image pushes and pulls were verified.
+- Jenkins runs on the existing EC2 instance with Java 21; application builds explicitly use Java 17. Jenkins has Docker-group access.
+- Jenkins temporary storage moved from the sub-1-GiB RAM-backed /tmp to /var/lib/jenkins/tmp after disk monitoring took the node offline.
+- Build #5 passed 22 tests and created the JAR; #6 loaded the Jenkinsfile from GitHub; #7 built the Docker image; #8 published the image to ECR.
+- Manual EC2 container deployment of build-8 passed health and smoke checks. The user subsequently chose ECS Fargate for application hosting, retaining Jenkins on EC2.
+- Fargate: cluster `devopsflow-cluster`, service `devopsflow-service`, task family `devopsflow-task`, execution role `devopsflow-ecs-execution-role`. Screenshot showed one desired/running task and service Active. Initial manual Fargate API checks passed.
+- Build #9 completed automated Fargate deployment; subsequent manual API smoke checks passed.
+- Build #10 published digest `sha256:09edbfa7ca89275e1e0f6efec71f5f298dba4a0a79637abb19ce57217fc2d81d`, deployed `devopsflow-task:3`, discovered the task private IP, and passed automatic health/CRUD/validation/missing-task checks. Jenkins ended SUCCESS.
+- GitHub webhook ping returned HTTP 200. Build #11 was reported as "Started by GitHub push by RichardL05" and Finished SUCCESS, verifying the automatic trigger and the pipeline.
+- Verified delivery: GitHub push → Jenkins checkout → Maven tests/package → Docker build → ECR push → Fargate deployment → image/revision verification → health and API smoke checks.
+
+Current limitations and follow-up:
+- Jenkins port 8080 is open to all IPv4 addresses over HTTP at the user's explicit choice. HTTPS is not configured.
+- Fargate uses a task IP directly, without a load balancer or stable application endpoint. Task IPs change on replacement; pipeline checks use private IP discovery.
+- Storage remains in memory and is lost on task restart/replacement. Single desired task; database, login, and frontend remain deferred.
+- The pipeline fails if API verification fails; automatic rollback after smoke-check failure is not implemented. ECS deployment failure/rollback behavior has not been exercised.
+- GitHub/Jira development linking was previously verified. Jenkins build/deployment reporting into Jira (DEVOPS-12) is not yet configured or verified.
+- Advanced monitoring, branch protection, image retention/cleanup, and teardown remain follow-up work.
+- These results do not prove every original Jira epic acceptance criterion is complete. Jira status changes for this phase have not been performed by the assistant.
