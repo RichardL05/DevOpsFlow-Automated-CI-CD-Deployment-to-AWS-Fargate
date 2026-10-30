@@ -59,6 +59,55 @@ aws ecr describe-images \
 '''
             }
         }
+        stage('Deploy and Verify') {
+            steps {
+                sh '''#!/bin/bash
+set -euo pipefail
+IMAGE="358122644682.dkr.ecr.ap-south-2.amazonaws.com/devopsflow:build-${BUILD_NUMBER}"
+docker image inspect "$IMAGE" >/dev/null
+
+# Keep one previous container for rollback.
+if docker container inspect devopsflow-app-previous >/dev/null 2>&1; then
+    docker rm devopsflow-app-previous
+fi
+had_previous=false
+if docker container inspect devopsflow-app >/dev/null 2>&1; then
+    docker stop devopsflow-app
+    docker rename devopsflow-app devopsflow-app-previous
+    had_previous=true
+fi
+
+rollback() {
+    result=$?
+    if [ "$result" -ne 0 ]; then
+        docker logs --tail 60 devopsflow-app || true
+        docker rm -f devopsflow-app || true
+        if [ "$had_previous" = true ]; then
+            docker rename devopsflow-app-previous devopsflow-app
+            docker start devopsflow-app
+            echo "Restored previous container; deployment failed."
+        fi
+    fi
+}
+trap rollback EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+docker run -d --pull never --name devopsflow-app \
+    --restart unless-stopped --memory 384m \
+    -e JAVA_TOOL_OPTIONS="-Xms64m -Xmx192m" \
+    -e SERVER_ADDRESS=0.0.0.0 \
+    -p 127.0.0.1:8083:8080 "$IMAGE"
+
+curl --fail --silent --show-error \
+    --retry 20 --retry-all-errors --retry-delay 2 \
+    --retry-max-time 90 --max-time 5 \
+    http://127.0.0.1:8083/actuator/health
+python3 scripts/smoke_test.py http://127.0.0.1:8083
+echo "Deployment and API verification passed: $IMAGE"
+'''
+            }
+        }
     }
 
     post {
