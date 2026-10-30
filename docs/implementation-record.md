@@ -2,7 +2,7 @@
 
 ## Recording rules
 
-Only record work actually performed. Planned work is not completion evidence. Attribute assistant actions explicitly. No application tests or deployments have occurred for DevOps Flow.
+Only record work actually performed. Planned work is not completion evidence. Attribute assistant actions explicitly. Earlier entries describe historical snapshots; the later entries below record subsequent work and supersede their pending-status statements.
 
 ## User-performed Jira setup
 
@@ -59,3 +59,68 @@ Troubleshooting:
 
 Status: repository creation verified; documentation awaits pull request review and merge.
 GitHub/Jira integration, branch protection, Jenkins, Docker builds, ECR, and EC2 remain unconfigured.
+
+
+## Subsequent verification — repository and Jira connection
+
+Evidence: GitHub connector responses, computer-use observations, and user screenshots in the project conversation.
+- PR #1 was verified merged to main, merge commit 253a0d706c0ba1062b3be8e0eedf4cb1178fe135. Both documentation files were fetched from main afterward.
+- DEVOPS-13 was updated with that evidence and verified Done.
+- The user approved installation of GitHub for Atlassian.
+- The saved GitHub installation settings were verified in a user screenshot: Only select repositories, selected 1 repository, RichardL05/devopsflow.
+- Jira's DEVOPS-13 Development panel was observed showing 2 branches, 3 commits, and 1 merged pull request.
+- The earlier pending GitHub/Jira development-linking status is therefore superseded. Jenkins build/deployment reporting remains pending.
+
+Troubleshooting: Chrome initially blocked the connection popup. After the user allowed popups, the connection flow was retried/refreshed and the GitHub installation page opened. Do not claim an additional root cause was proven.
+
+## User-performed EC2 development setup
+
+Date: 2026-10-30 (Asia/Calcutta).
+The user chose Hyderabad, Ubuntu 26.04 LTS, and a dedicated SSH key pair; reported creating the EC2 machine and connecting to its terminal.
+The exact launched instance type, security-group rules, and account Free Tier coverage have not been independently verified. The planning choices alone are not launch evidence.
+
+Screenshot evidence:
+- Ubuntu 26.04.1 LTS, x86_64, approximately 1.9 GiB RAM and 17 GiB available root disk space.
+- Git 2.53.0.
+- OpenJDK and javac 17.0.20.1; Apache Maven 3.9.12 using Java 17.
+- The user-generated initial starter's Maven build returned BUILD SUCCESS (41.984 seconds).
+- Its health response contained status UP after initial connection retries during startup.
+
+Commands supplied and subsequently evidenced by the tool-version screenshot:
+```bash
+sudo apt update
+sudo apt install -y openjdk-17-jdk-headless maven
+java -version
+javac -version
+mvn -version
+```
+
+The user reported cloning the private repository using an HTTPS token. No token values are recorded.
+Screenshots showed the starter running under root at /root/projects/devopsflow; do not claim the user switched to ubuntu.
+The starter result does not verify the complete CRUD implementation in the next section.
+
+## DEVOPS-8 — Complete Task Management API source
+
+Date: 2026-10-30 (Asia/Calcutta).
+Performed by: assistant, after the user explicitly requested generating the code and pushing it to GitHub, with the build to follow on EC2.
+
+Repository inspection found only documentation on main and no remote application feature branch. No existing EC2 checkout was changed. The application is prepared on a separate feature/DEVOPS-8-task-api branch referencing the existing DEVOPS-8 epic; no new Jira task key is invented.
+
+Implemented in this change:
+- Java 17 / Spring Boot 4.1.2 Maven project.
+- Create, list, retrieve, replace, and delete task endpoints.
+- Immutable task records, a concurrent in-memory repository, generated IDs, and default TODO status.
+- Required nonblank titles, optional descriptions, allowed status values, and structured 400/404 errors.
+- Localhost binding by default and Actuator health exposure.
+- Service and actual-HTTP integration tests.
+- Optional Python standard-library CRUD smoke script.
+- README and an explicit EC2 build, smoke, and restart-verification procedure.
+
+Verification boundary:
+- Source review, POM XML parsing, Java package/path checks, and Python syntax validation are performed before the push.
+- The completed implementation has not yet been compiled, its Java tests have not been executed, and its smoke/restart checks have not been run.
+- The earlier successful starter build must not be presented as a passing build of this change.
+- GitHub publication is verified separately after the branch update. PR review and an EC2 build are required before merge or marking application implementation complete.
+
+Jenkins, Docker, ECR, automated EC2 deployment, advanced monitoring, and branch protection remain pending. No cloud resources were created by the assistant during this code-generation step.
+
