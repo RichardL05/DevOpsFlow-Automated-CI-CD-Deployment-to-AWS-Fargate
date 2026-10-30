@@ -150,3 +150,29 @@ Current limitations and follow-up:
 - GitHub/Jira development linking was previously verified. Jenkins build/deployment reporting into Jira (DEVOPS-12) is not yet configured or verified.
 - Advanced monitoring, branch protection, image retention/cleanup, and teardown remain follow-up work.
 - These results do not prove every original Jira epic acceptance criterion is complete. Jira status changes for this phase have not been performed by the assistant.
+
+## ECS startup-failure rollback verified — 2026-10-30
+
+Evidence: user-provided AWS CLI output, ECS console screenshots, and recovered API smoke-test output. This entry supersedes the earlier statement that ECS failure recovery had not been exercised.
+
+The user performed a controlled failure test through the AWS CLI while Jenkins was idle. No GitHub push or Jenkins build initiated the test.
+
+- Baseline: `devopsflow-task:5`, one desired/running task, zero pending, deployment COMPLETED.
+- Service configuration: circuit breaker enabled, rollback enabled, minimum healthy percent 100, maximum percent 200.
+- Test revision: `devopsflow-task:6`, pointing to a deliberately nonexistent ECR tag prefixed `rollback-test-missing-`.
+- ECS task starts failed with `CannotPullContainerError`: the requested image was not found.
+- Earlier status samples showed the test deployment still IN_PROGRESS with failedTasks increasing to three. Those samples alone did not prove rollback.
+- The ECS console subsequently explicitly reported rollback because the circuit-breaker threshold was exceeded.
+- Final CLI output confirmed service task definition returned to revision 5, one running task, zero pending, and a single COMPLETED deployment.
+- Events explicitly recorded the failed deployment, rollback to deployment `ecs-svc/4098453933554065982`, completion, and steady state.
+- The user ran `scripts/smoke_test.py` against the recovered application's task endpoint. It returned PASS for health, create, list, retrieve, update, validation, delete, and not-found responses.
+
+A manual restore command was supplied during troubleshooting, but its execution was not evidenced. The explicit circuit-breaker rollback message and service events establish that automatic ECS rollback occurred; do not claim a manual restore was performed.
+
+Verification boundary:
+- This proves ECS recovery from a container startup/image-pull failure.
+- It does not prove automatic rollback after a Jenkins API smoke-check failure; that behavior remains unimplemented.
+- No continuous availability test was performed, although status samples showed the previous healthy task remained running.
+- No Jenkins run occurred during the controlled test.
+- Revision 6 remains a deliberately invalid historical task definition; deregistration/cleanup has not been evidenced.
+- Jira evidence was supplied for the user to record. The assistant has not verified the saved Jira comment or changed the epic status.
