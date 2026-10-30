@@ -1,3 +1,7 @@
+> **Verified status — 2026-10-30:** The application is deployed on **ECS Fargate**, with **Jenkins on EC2**. GitHub-triggered Jenkins build #11 completed successfully after automated Maven build/tests, Docker packaging, ECR publishing, Fargate deployment, and API verification. The API's 22 automated tests and restart data-loss behavior were verified earlier. See [implementation record](docs/implementation-record.md) for evidence and limitations. Earlier pending/setup text below describes the initial implementation snapshot.
+>
+> The application uses temporary in-memory storage. Jenkins currently uses publicly reachable HTTP at the user's choice. Automated rollback following API-check failure, Jira build/deployment reporting, stable application endpoint, and advanced monitoring remain follow-up work.
+
 # DevOps Flow
 
 A hands-on learning and portfolio project: a Java Task Management REST API with a planned Jira-integrated delivery pipeline on AWS.
