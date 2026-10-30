@@ -27,6 +27,12 @@ pipeline {
                 sh 'mvn -B -ntp clean verify'
             }
         }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t "devopsflow:build-${BUILD_NUMBER}" .'
+                sh 'docker image inspect "devopsflow:build-${BUILD_NUMBER}" --format "{{.Id}}"'
+            }
+        }
     }
 
     post {
