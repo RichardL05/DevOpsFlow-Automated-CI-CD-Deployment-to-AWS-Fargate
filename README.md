@@ -88,7 +88,7 @@ The application binds to localhost by default. Container deployments set `SERVER
 - Invalid JSON, invalid statuses (including numeric values), invalid IDs, and validation errors return 400.
 - Retrieve, update, and delete of a missing task return 404 with `Task not found` details.
 - Errors use Spring's RFC 9457 Problem Details (`application/problem+json`). Validation failures include an `errors` field map.
-- Health and Prometheus metrics are the exposed Actuator endpoints. Login, database persistence, pagination, and a web interface are deferred.
+- Health is the only exposed Actuator endpoint. Login, database persistence, pagination, and a web interface are deferred.
 
 Examples (run inside EC2 while the application is running):
 
@@ -109,7 +109,3 @@ Use the ID from the creation response for GET, PUT, and DELETE; do not assume a 
 - ECS startup-failure rollback was tested. A failing Jenkins API check marks the build failed but does not automatically roll back the service.
 - No load balancer or stable application URL: task public IPs may change after deployment.
 - Jenkins uses public HTTP on port 8080, open to all IPv4 addresses by the user's choice; authentication remains required. The API has no authentication. This is a learning setup.
-
-## Monitoring extension
-
-[Prometheus and Grafana setup](monitoring/README.md) adds application metrics, automatic Fargate target discovery, and a provisioned dashboard. Configuration is prepared; live installation, scraping, and dashboard verification are pending. Metrics share port 8080, so scope application access to the EC2 security group and your IP before deployment. Grafana should be allowed on port 3000 from your IP only.
