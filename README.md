@@ -118,3 +118,11 @@ Use the ID from the creation response for GET, PUT, and DELETE; do not assume a 
 ## Verify the GitHub trigger
 
 After starting Jenkins, push a reviewed change to `main` and check that the build says **Started by GitHub push**. A successful webhook delivery alone does not confirm that the build or deployment succeeded. If the EC2 public IP changed after stopping and starting it, update the GitHub webhook URL first.
+
+### Verify a pull request merge
+
+1. Review the proposed changes in the pull request's **Files changed** tab.
+2. Merge the pull request into `main` when ready. Opening a pull request alone does not trigger this project's main-branch deployment.
+3. In Jenkins, confirm a new build starts with **Started by GitHub push**.
+4. Check that deployment and API verification pass and the console ends with **Finished: SUCCESS**.
+5. Record the build number and deployed task revision as evidence of that run.
