@@ -114,3 +114,7 @@ Use the ID from the creation response for GET, PUT, and DELETE; do not assume a 
 - ECS startup-failure rollback was tested. A failing Jenkins API check marks the build failed but does not automatically roll back the service.
 - No load balancer or stable application URL: task public IPs may change after deployment.
 - Jenkins uses public HTTP on port 8080, open to all IPv4 addresses by the user's choice; authentication remains required. The API has no authentication. This is a learning setup.
+
+## Verify the GitHub trigger
+
+After starting Jenkins, push a reviewed change to `main` and check that the build says **Started by GitHub push**. A successful webhook delivery alone does not confirm that the build or deployment succeeded. If the EC2 public IP changed after stopping and starting it, update the GitHub webhook URL first.
