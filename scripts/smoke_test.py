@@ -9,6 +9,8 @@ from urllib.request import Request, urlopen
 def main():
     base = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8080").rstrip("/")
 
+    print(f"Checking API: {base}", flush=True)
+
     def request(method, path, body=None, expected=200):
         data = None if body is None else json.dumps(body).encode()
         headers = {} if body is None else {"Content-Type": "application/json"}
@@ -20,6 +22,7 @@ def main():
             content = response.read().decode()
             if response.status != expected:
                 raise RuntimeError(f"{method} {path}: expected {expected}, got {response.status}: {content}")
+            print(f"PASS: {method} {path} returned HTTP {response.status}", flush=True)
             return json.loads(content) if content else None
 
     if request("GET", "/actuator/health")["status"] != "UP":
